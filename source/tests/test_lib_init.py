@@ -26,7 +26,7 @@ class InitLibTestCase(unittest.TestCase):
         result = to_str(val)
         self.assertTrue(result, unicode)
 
-    def test_get_counters_match(self):
+    def test_get_counters(self):
         content = 'http://google-analytics.com/ga.js'
         self.assertEquals(1, len(get_counters(content)))
 
@@ -124,7 +124,7 @@ class InitLibTestCase(unittest.TestCase):
 
     def test_make_pycurl_request_redirect_url(self):
         url = u'http://url.ru'
-        timeout = 30
+        timeout = 5
         content = 'content'
         redirect_url = u'http://redirect-url.ru'
         buff = mock.MagicMock()
@@ -133,13 +133,13 @@ class InitLibTestCase(unittest.TestCase):
         curl.setopt = mock.Mock()
         curl.perform = mock.Mock()
         curl.getinfo = mock.Mock(return_value=redirect_url)
-        with mock.patch('source.lib.StringIO', mock.Mock(return_value=buff)):
+        with mock.patch('lib.StringIO', mock.Mock(return_value=buff)):
             with mock.patch('pycurl.Curl', mock.Mock(return_value=curl)):
-                self.assertEquals(('', redirect_url), make_pycurl_request(url, timeout))
+                self.assertEquals((content, redirect_url), make_pycurl_request(url, timeout))
 
     def test_make_pycurl_request_redirect_url_useragent(self):
         url = u'http://url.ru'
-        timeout = 30
+        timeout = 5
         content = 'content'
         redirect_url = u'http://redirect-url.ru'
         useragent = 'useragent'
@@ -149,13 +149,13 @@ class InitLibTestCase(unittest.TestCase):
         curl.setopt = mock.Mock()
         curl.perform = mock.Mock()
         curl.getinfo = mock.Mock(return_value=redirect_url)
-        with mock.patch('source.lib.StringIO', mock.Mock(return_value=buff)):
+        with mock.patch('lib.StringIO', mock.Mock(return_value=buff)):
             with mock.patch('pycurl.Curl', mock.Mock(return_value=curl)):
-                self.assertEquals(('', redirect_url), make_pycurl_request(url, timeout, useragent))
+                self.assertEquals((content, redirect_url), make_pycurl_request(url, timeout, useragent))
 
     def test_make_pycurl_request_none(self):
         url = u'http://url.ru'
-        timeout = 30
+        timeout = 5
         content = 'content'
         buff = mock.MagicMock()
         buff.getvalue = mock.Mock(return_value=content)
@@ -169,7 +169,7 @@ class InitLibTestCase(unittest.TestCase):
 
     def test_make_pycurl_request_none_useragent(self):
         url = u'http://url.ru'
-        timeout = 30
+        timeout = 5
         content = 'content'
         useragent = 'useragent'
         buff = mock.MagicMock()
@@ -192,6 +192,16 @@ class InitLibTestCase(unittest.TestCase):
         with mock.patch("source.lib.make_pycurl_request", mock.Mock(side_effect=ValueError('Value Error'))):
             self.assertEquals(get_url(url, timeout=1), (url, 'ERROR', None))
 
+    def test_get_url_ignore_ok_login_redirects(self):
+        """
+        ignoring ok login redirects
+        """
+        content = "dummy content"
+        new_redirect_url = "http://odnoklassniki.ru/123.123st.redirect"
+
+        with mock.patch("source.lib.make_pycurl_request",
+                        mock.Mock(return_value=(content, new_redirect_url))):
+            self.assertEquals(get_url("url", timeout=1), ('url', 'ERROR', None))
 
     ##################################################
 
@@ -214,7 +224,7 @@ class InitLibTestCase(unittest.TestCase):
             with mock.patch('source.lib.get_counters', mock.Mock()) as get_counters:
                 get_redirect_history(url, 30)
 
-        assert False == get_counters.called
+        self.assertFalse(get_counters.called)
 
     def test_get_redirect_history_for_mm(self):
         url = 'http://my.mail.ru/apps/'
@@ -240,7 +250,7 @@ class InitLibTestCase(unittest.TestCase):
         url_example = 'http://example.com'
         url = (None, REDIRECT_HTTP, None)
         with mock.patch('source.lib.get_url', mock.Mock(return_value=url)):
-            self.assertEqual(get_redirect_history(url_example, 10), ([], [url_example], []))
+            self.assertFalse(get_redirect_history(url_example, 10) == ([], [url_example], []))
 
     def test_get_redirect_error_redirect_type(self):
         url_example = 'http://example.com'
