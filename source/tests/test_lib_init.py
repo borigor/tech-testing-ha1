@@ -10,22 +10,22 @@ class InitLibTestCase(unittest.TestCase):
     def test_to_unicode(self):
         val = u"val"
         result = to_unicode(val)
-        self.assertTrue(result, unicode)
+        self.assertTrue(isinstance(result, unicode))
 
     def test_to_unicode_else(self):
         val = "значение"
         result = to_unicode(val)
-        self.assertTrue(result, unicode)
+        self.assertTrue(isinstance(result, unicode))
 
     def test_to_str(self):
         val = u"val"
         result = to_str(val)
-        self.assertTrue(result, unicode)
+        self.assertTrue(isinstance(result, str))
 
     def test_to_str_else(self):
         val = "значение"
         result = to_str(val)
-        self.assertTrue(result, unicode)
+        self.assertTrue(isinstance(result, str))
 
     def test_get_counters(self):
         content = 'http://google-analytics.com/ga.js'
@@ -365,9 +365,9 @@ class InitLibTestCase(unittest.TestCase):
                 with mock.patch('lib.quote_plus', mock.Mock()) as quote_plus:
                     prepare_url(url)
 
-        urlparse.assert_called_once()
-        quote.assert_called_once()
-        quote_plus.assert_called_once()
+        urlparse.assert_called_once_with(to_unicode(url), allow_fragments=False)
+        self.assertTrue(quote.called)
+        self.assertTrue(quote_plus.called)
 
     def test_prepare_url_exception(self):
         netlock = mock.Mock()
@@ -375,4 +375,5 @@ class InitLibTestCase(unittest.TestCase):
         with mock.patch('lib.urlparse', mock.Mock(return_value=('scheme', netlock, 'path', 'qs', 'anchor', 'fragments'))):
             with mock.patch('lib.urlunparse', mock.Mock()) as urlunparse:
                 prepare_url('url')
+                
         self.assertTrue(urlunparse.called)
