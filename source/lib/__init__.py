@@ -71,7 +71,7 @@ def check_for_meta(content, url):
 
 def fix_market_url(url):
     """Преобразует market:// урлы в http://"""
-    return 'http://play.google.com/store/apps/' + url.lstrip("market://")
+    return 'http://play.google.com/store/apps/' + url[len('market://'):] if url.startswith('market://') else url
 
 
 def make_pycurl_request(url, timeout, useragent=None):
@@ -191,6 +191,7 @@ def prepare_url(url):
     try:
         netloc = netloc.encode('idna')
     except UnicodeError:
+        logger.error("UnicodeError")
         pass
     path = quote(to_str(path, 'ignore'), safe='/%+$!*\'(),')
     qs = quote_plus(to_str(qs, 'ignore'), safe=':&%=+$!*\'(),')

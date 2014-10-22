@@ -127,3 +127,4 @@ def check_network_status(check_url, timeout):
         return True
     except (urllib2.URLError, socket.error, ValueError):
         return False
+
